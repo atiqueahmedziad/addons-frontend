@@ -1,4 +1,5 @@
 import config from 'config';
+import httpContext from 'universal-express-http-context';
 
 let pino = null;
 if (process.env.NODE_ENV === 'test') {
@@ -16,9 +17,25 @@ if (process.env.NODE_ENV === 'test') {
   pino = require('pino');
 }
 
-const appName = config.get('appName');
-
-export default pino({
+const pinoLogger = pino({
   level: config.get('loggingLevel'),
-  name: appName,
+  name: config.get('appName'),
 });
+
+export default ['debug', 'error', 'fatal', 'info', 'trace', 'warn'].reduce(
+  (decoratedLogger, level) => {
+    return {
+      ...decoratedLogger,
+      [level]: (...args) => {
+        const requestId = httpContext.get('amo-request-id');
+
+        if (requestId) {
+          pinoLogger[level]({ requestId }, ...args);
+        } else {
+          pinoLogger[level](...args);
+        }
+      },
+    };
+  },
+  {},
+);

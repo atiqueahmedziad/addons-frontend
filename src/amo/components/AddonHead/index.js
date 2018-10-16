@@ -1,10 +1,12 @@
 /* @flow */
+import config from 'config';
 import invariant from 'invariant';
 import * as React from 'react';
 import Helmet from 'react-helmet';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 
+import { getCanonicalURL } from 'amo/utils';
 import {
   ADDON_TYPE_DICT,
   ADDON_TYPE_EXTENSION,
@@ -16,6 +18,7 @@ import {
 } from 'core/constants';
 import translate from 'core/i18n/translate';
 import { getPreviewImage } from 'core/imageUtils';
+import supportedLanguages from 'core/languages';
 import { getAddonJsonLinkedData } from 'core/utils/addons';
 import type { AppState } from 'amo/store';
 import type { I18nType } from 'core/types/i18n';
@@ -27,12 +30,20 @@ type Props = {|
 
 type InternalProps = {|
   ...Props,
+  _config: typeof config,
+  _supportedLanguages: typeof supportedLanguages,
   clientApp: string,
   i18n: I18nType,
   lang: string,
+  locationPathname: string,
 |};
 
 export class AddonHeadBase extends React.Component<InternalProps> {
+  static defaultProps = {
+    _config: config,
+    _supportedLanguages: supportedLanguages,
+  };
+
   getPageTitle() {
     const { addon, clientApp, i18n, lang } = this.props;
 
@@ -181,8 +192,32 @@ export class AddonHeadBase extends React.Component<InternalProps> {
     return tags;
   }
 
+  renderAlternateLinks() {
+    const { _config, _supportedLanguages, addon, clientApp } = this.props;
+
+    invariant(addon, 'addon is required');
+
+    const locales = ['x-default', ...Object.keys(_supportedLanguages)];
+
+    return locales.map((locale) => {
+      const locationPathname =
+        locale === 'x-default'
+          ? `/${clientApp}/addon/${addon.slug}/`
+          : `/${locale}/${clientApp}/addon/${addon.slug}/`;
+
+      return (
+        <link
+          href={getCanonicalURL({ locationPathname, _config })}
+          hrefLang={locale}
+          key={locale}
+          rel="alternate"
+        />
+      );
+    });
+  }
+
   render() {
-    const { addon } = this.props;
+    const { _config, addon, locationPathname } = this.props;
 
     if (!addon) {
       return null;
@@ -191,7 +226,12 @@ export class AddonHeadBase extends React.Component<InternalProps> {
     return (
       <Helmet titleTemplate={null}>
         <title>{this.getPageTitle()}</title>
-        <link rel="canonical" href={addon.url} />
+
+        <link
+          rel="canonical"
+          href={getCanonicalURL({ locationPathname, _config })}
+        />
+        {this.renderAlternateLinks()}
 
         <meta name="description" content={this.getPageDescription()} />
         <meta name="date" content={addon.created} />
@@ -210,10 +250,12 @@ export class AddonHeadBase extends React.Component<InternalProps> {
 
 const mapStateToProps = (state: AppState) => {
   const { clientApp, lang } = state.api;
+  const locationPathname = state.router.location.pathname;
 
   return {
     clientApp,
     lang,
+    locationPathname,
   };
 };
 

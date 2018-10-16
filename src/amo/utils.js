@@ -61,5 +61,5 @@ export const getCanonicalURL = ({
   _config?: typeof config,
   locationPathname: string,
 |}): string => {
-  return `${_config.get('baseURL')}${locationPathname}`;
+  return `https://sharp-zebra-0.localtunnel.me${locationPathname}`;
 };

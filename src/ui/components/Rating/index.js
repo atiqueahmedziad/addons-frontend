@@ -152,7 +152,10 @@ export class RatingBase extends React.Component<InternalProps, StateType> {
 
       if (readOnly) {
         return (
-          <div {...props}>
+          <div
+            aria-hidden="true"
+            {...props}
+          >
             {this.renderStar({
               half: halfStar,
               selected: isSelected,
@@ -225,6 +228,7 @@ export class RatingBase extends React.Component<InternalProps, StateType> {
 
     return (
       <div
+        aria-hidden="true"
         className={allClassNames}
         title={description}
         onMouseLeave={this.stopHovering}

@@ -140,6 +140,7 @@ export class RatingBase extends React.Component<InternalProps, StateType> {
         thisRating - rating > 0.25 && thisRating - rating <= 0.75;
 
       const props = {
+        'area-hidden': readOnly,
         className: makeClassName('Rating-star', `Rating-rating-${thisRating}`, {
           'Rating-selected-star': isSelected,
           'Rating-half-star': halfStar,
@@ -153,7 +154,6 @@ export class RatingBase extends React.Component<InternalProps, StateType> {
       if (readOnly) {
         return (
           <div
-            aria-hidden="true"
             {...props}
           >
             {this.renderStar({
